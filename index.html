@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Инженерный калькулятор | УЭЦН</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f7; color: #1d1d1f; padding:20px; -webkit-font-smoothing: antialiased; }
+        .container { max-width:1200px; margin:0 auto; }
+        .app-header { text-align:center; padding:30px 0 20px 0; border-bottom:1px solid #d2d2d7; margin-bottom:28px; }
+        .app-header h1 { font-size:2.6rem; font-weight:700; letter-spacing:-0.03em; background:linear-gradient(180deg,#1d1d1f 0%,#6e6e73 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .app-header p { font-size:1rem; color:#6e6e73; margin-top:4px; }
+        .tabs { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 12px; margin-bottom:30px; padding-bottom:6px; border-bottom:1px solid #d2d2d7; }
+        .tab-btn { background:transparent; border:none; padding:6px 2px; font-size:0.9rem; font-weight:500; color:#6e6e73; cursor:pointer; transition:0.2s; border-bottom:2px solid transparent; margin-bottom:-8px; }
+        .tab-btn:hover { color:#1d1d1f; }
+        .tab-btn.active { color:#1d1d1f; border-bottom-color:#0071e3; }
+        .card { background:#ffffff; border-radius:20px; padding:24px 28px; margin-bottom:24px; box-shadow:0 2px 12px rgba(0,0,0,0.04); border:1px solid #e5e5ea; }
+        .card-header { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; margin-bottom:18px; padding-bottom:8px; border-bottom:1px solid #e5e5ea; }
+        .card-header h2 { font-size:1.3rem; font-weight:600; letter-spacing:-0.02em; }
+        .badge { background:#f5f5f7; color:#6e6e73; font-size:0.7rem; font-weight:500; padding:4px 12px; border-radius:40px; border:1px solid #e5e5ea; }
+        .form-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:14px 18px; margin-bottom:14px; }
+        .input-group { display:flex; flex-direction:column; gap:3px; }
+        .input-group label { font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:#6e6e73; }
+        .input-group input, .input-group select { background:#f5f5f7; border:1px solid #d2d2d7; border-radius:12px; padding:8px 12px; font-size:0.9rem; color:#1d1d1f; transition:0.15s; font-family:inherit; width:100%; max-width:100%; }
+        .input-group input:focus, .input-group select:focus { outline:none; border-color:#0071e3; background:#ffffff; box-shadow:0 0 0 3px rgba(0,113,227,0.15); }
+        .field-hint { font-size:0.55rem; color:#8e8e93; padding-left:4px; border-left:2px solid #d2d2d7; margin-top:2px; }
+        .result-area { background:#f5f5f7; border-radius:16px; padding:14px 18px; margin-top:6px; border-left:4px solid #0071e3; }
+        .result-row { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px 12px; padding:3px 0; }
+        .result-label { font-weight:500; color:#1d1d1f; font-size:0.8rem; }
+        .result-value { font-family:"SF Mono",monospace; font-weight:600; font-size:0.9rem; color:#0071e3; background:#fff; padding:2px 12px; border-radius:30px; border:1px solid #e5e5ea; }
+        .button-bar { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
+        .small-btn { background:#f5f5f7; border:1px solid #d2d2d7; padding:5px 14px; border-radius:30px; font-size:0.7rem; font-weight:500; color:#1d1d1f; cursor:pointer; transition:0.15s; font-family:inherit; }
+        .small-btn:hover { background:#e5e5ea; border-color:#a1a1a6; }
+        .small-btn.primary { background:#0071e3; color:#fff; border-color:#0071e3; }
+        .small-btn.primary:hover { background:#005bbf; }
+        .sections-table-wrap { overflow-x:auto; margin:10px 0; }
+        .sections-table { width:100%; border-collapse:collapse; font-size:0.75rem; min-width:480px; }
+        .sections-table th { background:#f5f5f7; font-weight:600; color:#6e6e73; text-align:center; padding:8px 6px; border-bottom:1px solid #d2d2d7; }
+        .sections-table td { padding:6px 4px; text-align:center; border-bottom:1px solid #e5e5ea; }
+        .sections-table input, .sections-table select { width:75px; padding:4px 6px; border:1px solid #d2d2d7; border-radius:8px; text-align:center; font-size:0.7rem; background:#f5f5f7; font-family:inherit; max-width:100%; }
+        .sections-table input:focus, .sections-table select:focus { border-color:#0071e3; background:#fff; outline:none; }
+        .section-total { background:#f5f5f7; font-weight:600; }
+        .delete-row-btn { background:#fee; border:none; border-radius:16px; padding:2px 10px; font-size:0.65rem; color:#b91c1c; cursor:pointer; }
+        .delete-row-btn:hover { background:#fdd; }
+        .warning-note { background:#f5f5f7; border-radius:14px; padding:10px 16px; font-size:0.7rem; color:#6e6e73; margin-top:14px; border-left:4px solid #ff9f0a; }
+        .success-note { border-left-color:#34c759; }
+        .danger-note { border-left-color:#ff3b30; color:#1d1d1f; }
+        .info-note { border-left-color:#0071e3; }
+        footer { text-align:center; margin-top:30px; padding:15px 0 8px 0; font-size:0.65rem; color:#8e8e93; border-top:1px solid #d2d2d7; }
+        @media (max-width:700px) { body { padding:12px; } .app-header h1 { font-size:2rem; } .card { padding:18px 16px; } .form-grid { grid-template-columns:1fr; gap:12px; } .tabs { gap:2px 6px; } .tab-btn { font-size:0.75rem; } .sections-table input, .sections-table select { width:60px; } }
+        @media (max-width:480px) { .app-header h1 { font-size:1.6rem; } .result-row { flex-direction:column; align-items:flex-start; gap:2px; } }
+        .tab-content { display:none; animation:fade 0.2s ease; }
+        .tab-content.active { display:block; }
+        @keyframes fade { from { opacity:0.4; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+        .section-divider { margin:18px 0 12px 0; font-weight:600; color:#6e6e73; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; border-bottom:1px solid #d2d2d7; padding-bottom:4px; }
+        .fluid-grid, .kpr-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; }
+        .fluid-item, .kpr-item { background:#f9f9fb; border-radius:14px; padding:14px 16px; border:1px solid #e5e5ea; }
+        .kpr-item .form-grid { grid-template-columns:1fr 1fr; }
+        @media (max-width:700px) { .fluid-grid, .kpr-grid { grid-template-columns:1fr; } .kpr-item .form-grid { grid-template-columns:1fr; } }
+        .example-accordion { margin-top:16px; border-top:1px solid #d2d2d7; padding-top:12px; }
+        .example-accordion details { margin-bottom:6px; border-radius:12px; background:#f5f5f7; padding:6px 12px; border:1px solid #e5e5ea; }
+        .example-accordion summary { font-weight:600; cursor:pointer; outline:none; padding:4px 0; }
+        .example-accordion summary::-webkit-details-marker { color:#0071e3; }
+        .example-accordion .example-content { font-size:0.8rem; padding:6px 0; line-height:1.4; }
+        .example-accordion .example-content .formula { background:#e9e9ed; padding:2px 8px; border-radius:6px; display:inline-block; margin:2px 0; }
+        .example-accordion .example-content .result-example { color:#0071e3; font-weight:600; }
+        .export-all-bar { display:flex; gap:10px; justify-content:center; margin:20px 0; flex-wrap:wrap; }
+        .export-all-bar .small-btn { padding:8px 24px; font-size:0.8rem; }
+        .choke-diagram { display:flex; align-items:center; justify-content:center; gap:20px; margin:12px 0; padding:12px; background:#f9f9fb; border-radius:16px; border:1px solid #e5e5ea; flex-wrap:wrap; }
+        .choke-diagram .arrow { font-size:1.5rem; color:#0071e3; }
+        .choke-diagram .pipe { display:flex; flex-direction:column; align-items:center; }
+        .choke-diagram .pipe-label { font-size:0.6rem; color:#6e6e73; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="app-header"><h1>Инженерный калькулятор</h1><p>Расчёт параметров УЭЦН</p></header>
+    
+    <!-- Кнопки экспорта всех модулей -->
+    <div class="export-all-bar">
+        <button class="small-btn primary" id="exportAllPdf">📄 Экспорт всех модулей в PDF</button>
+        <button class="small-btn primary" id="exportAllExcel">📎 Экспорт всех модулей в Excel</button>
+    </div>
+
+    <nav class="tabs">
+        <button class="tab-btn active" data-tab="tab1">АПВ</button>
+        <button class="tab-btn" data-tab="tab2">Приток</button>
+        <button class="tab-btn" data-tab="tab3">Давления</button>
+        <button class="tab-btn" data-tab="tab4">Кабель и ПЭД</button>
+        <button class="tab-btn" data-tab="tab5">Напор</button>
+        <button class="tab-btn" data-tab="tab6">ЧРП</button>
+        <button class="tab-btn" data-tab="tab7">Газ</button>
+        <button class="tab-btn" data-tab="tab8">Объёмы</button>
+        <button class="tab-btn" data-tab="tab9">Охлаждение</button>
+        <button class="tab-btn" data-tab="tab10">Штуцер</button>
+        <button class="tab-btn" data-tab="tab11">Глушение</button>
+    </nav>
+
+    <!-- ===== МОДУЛЬ 1: АПВ ===== -->
+    <div id="tab1" class="tab-content active">
+        <div class="card">
+            <div class="card-header"><h2>🔄 АПВ / ПКВ</h2><span class="badge">цикличная работа</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>Q насоса (Qном), м³/сут</label><input type="number" id="apv_qpump" value="250" step="10"><span class="field-hint">Паспорт УЭЦН</span></div>
+                <div class="input-group"><label>Q притока (Qпл), м³/сут</label><input type="number" id="apv_qinflow" value="182" step="10"><span class="field-hint">Из модуля "Приток"</span></div>
+                <div class="input-group"><label>Кол-во циклов в сутки</label><input type="number" id="apv_cycles" value="24" step="1" min="1"><span class="field-hint">Технологический режим</span></div>
+                <div class="input-group"><label>Время откачки (ручной), мин</label><input type="number" id="apv_pump_t" value="15" step="1"><span class="field-hint">Ваше фактическое время</span></div>
+                <div class="input-group"><label>Время накопления (ручной), мин</label><input type="number" id="apv_accum_t" value="20" step="1"><span class="field-hint">Ваше фактическое время</span></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">⏱️ Рекомендуемое время работы (по Q и циклам)</span><span class="result-value" id="apv_work_recommended">—</span></div>
+                <div class="result-row"><span class="result-label">⏸️ Рекомендуемое время отстоя (по Q и циклам)</span><span class="result-value" id="apv_stop_recommended">—</span></div>
+                <div class="result-row"><span class="result-label">📊 Средняя подача (по вашим значениям)</span><span class="result-value" id="apv_avg">—</span></div>
+                <div class="result-row"><span class="result-label">📈 Коэффициент использования (Ки)</span><span class="result-value" id="apv_util">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab1">📄 PDF</button><button class="small-btn export-excel" data-module="tab1">📎 Excel</button></div>
+            <div class="warning-note">💡 Поля времени можно менять вручную — расчёты используют их. Рекомендуемые значения показаны для справки.</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 2: ПРИТОК ===== -->
+    <div id="tab2" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>📈 Кпродуктивности</h2><span class="badge">4 варианта</span></div>
+            <div class="kpr-grid">
+                <div class="kpr-item">
+                    <div style="font-weight:600; font-size:0.75rem; color:#6e6e73; margin-bottom:8px;">1. Кпр = Q / (Pпл – Pзаб)</div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group"><label>Q, м³/сут</label><input type="number" id="kpr1_q" value="32" step="1"></div>
+                        <div class="input-group"><label>Pпл, атм</label><input type="number" id="kpr1_ppl" value="240" step="1"></div>
+                        <div class="input-group"><label>Pзаб, атм</label><input type="number" id="kpr1_pzab" value="110" step="1"></div>
+                    </div>
+                    <div class="result-row"><span class="result-label">📊 Кпр</span><span class="result-value" id="kpr1_result">—</span></div>
+                </div>
+                <div class="kpr-item">
+                    <div style="font-weight:600; font-size:0.75rem; color:#6e6e73; margin-bottom:8px;">2. Q = Кпр × (Pпл – Pзаб)</div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group"><label>Кпр</label><input type="number" id="kpr2_kpr" value="0.35915" step="0.00001"></div>
+                        <div class="input-group"><label>Pпл, атм</label><input type="number" id="kpr2_ppl" value="220" step="1"></div>
+                        <div class="input-group"><label>Pзаб, атм</label><input type="number" id="kpr2_pzab" value="85" step="1"></div>
+                    </div>
+                    <div class="result-row"><span class="result-label">📊 Q, м³/сут</span><span class="result-value" id="kpr2_result">—</span></div>
+                </div>
+                <div class="kpr-item">
+                    <div style="font-weight:600; font-size:0.75rem; color:#6e6e73; margin-bottom:8px;">3. Pпл = Q / Кпр + Pзаб</div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group"><label>Q, м³/сут</label><input type="number" id="kpr3_q" value="164" step="1"></div>
+                        <div class="input-group"><label>Кпр</label><input type="number" id="kpr3_kpr" value="1.53271" step="0.00001"></div>
+                        <div class="input-group"><label>Pзаб, атм</label><input type="number" id="kpr3_pzab" value="138" step="1"></div>
+                    </div>
+                    <div class="result-row"><span class="result-label">📊 Pпл, атм</span><span class="result-value" id="kpr3_result">—</span></div>
+                </div>
+                <div class="kpr-item">
+                    <div style="font-weight:600; font-size:0.75rem; color:#6e6e73; margin-bottom:8px;">4. Pзаб = Pпл – Q / Кпр</div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group"><label>Q, м³/сут</label><input type="number" id="kpr4_q" value="37" step="1"></div>
+                        <div class="input-group"><label>Кпр</label><input type="number" id="kpr4_kpr" value="0.24615" step="0.00001"></div>
+                        <div class="input-group"><label>Pпл, атм</label><input type="number" id="kpr4_ppl" value="240" step="1"></div>
+                    </div>
+                    <div class="result-row"><span class="result-label">📊 Pзаб, атм</span><span class="result-value" id="kpr4_result">—</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h2>📐 Давление на приёме Pпр</h2><span class="badge">по уровню и обводнённости</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>Обводнённость, %</label><input type="number" id="ppr_wc" value="94" step="1"><span class="field-hint">%H2O</span></div>
+                <div class="input-group"><label>Ндин, м</label><input type="number" id="ppr_ndyn" value="1900" step="10"><span class="field-hint">Динамический уровень</span></div>
+                <div class="input-group"><label>L спуска, м</label><input type="number" id="ppr_lsp" value="2534" step="10"><span class="field-hint">Глубина спуска насоса</span></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📊 Pпр, атм</span><span class="result-value" id="ppr_result">—</span></div>
+                <div class="result-row"><span class="result-label">📊 Плотность смеси (прибл.), кг/м³</span><span class="result-value" id="ppr_rho">—</span></div>
+            </div>
+            <div class="warning-note" style="margin-top:8px;">💡 Pпр = (L – Ндин) × (0.15×%H2O + 85) × 9.81 / 10000</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h2>📊 Приток с пласта</h2><span class="badge">по изменению уровня</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>Qгзу, м³/сут</label><input type="number" id="qin_gzu" value="64" step="1"><span class="field-hint">Замер по ГЗУ</span></div>
+                <div class="input-group"><label>Vзатр (суммарный), м³</label><input type="number" id="qin_v" value="2.5" step="0.01"><span class="field-hint">Из модуля "Объёмы"</span></div>
+                <div class="input-group"><label>Δt, час</label><input type="number" id="qin_dt" value="41.17" step="0.01"><span class="field-hint">Время между замерами</span></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">⏱️ Qзатр (из затрубья), м³/сут</span><span class="result-value" id="qin_qz">—</span></div>
+                <div class="result-row"><span class="result-label">📈 Qпл (приток с пласта), м³/сут</span><span class="result-value" id="qin_qpl">—</span></div>
+            </div>
+            <div class="warning-note" style="margin-top:8px;">💡 Qзатр = Vзатр × 24 / Δt; Qпл = Qгзу – Qзатр</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 3: ДАВЛЕНИЯ ===== -->
+    <div id="tab3" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>📐 Давления и динамический уровень</h2><span class="badge">по формулам Excel</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+                <div style="display:flex; align-items:center; gap:10px; font-size:0.8rem;">
+                    <input type="checkbox" id="p_simple_rho" checked>
+                    <span>Упрощённый расчёт плотности (ρ = 85 + 0.15×%H2O)</span>
+                </div>
+                <span class="field-hint" style="border-left:none; padding-left:0;">Выключите для ручного ввода ρн и ρв</span>
+            </div>
+            <div style="background:#f5f5f7; border-radius:16px; padding:14px 16px; margin-bottom:16px;">
+                <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+                    <div class="input-group" style="flex:1; min-width:80px;"><label>Обводнённость, %</label><input type="number" id="p_wc" value="82" step="1"></div>
+                    <div class="input-group" id="p_roil_group" style="flex:1; min-width:80px; display:none;"><label>ρн, кг/м³</label><input type="number" id="p_roil" value="850" step="10"></div>
+                    <div class="input-group" id="p_rwat_group" style="flex:1; min-width:80px; display:none;"><label>ρв, кг/м³</label><input type="number" id="p_rwat" value="1020" step="10"></div>
+                </div>
+                <div class="result-row" style="margin-top:8px; margin-bottom:0;">
+                    <span class="result-label">📊 Плотность жидкости ρ, кг/м³</span>
+                    <span class="result-value" id="p_rho_calc">—</span>
+                </div>
+            </div>
+            <div class="form-grid">
+                <div class="input-group"><label>Pзатр, атм</label><input type="number" id="p_pzatr" value="10" step="2"><span class="field-hint">Обязательно</span></div>
+                <div class="input-group"><label>L спуска, м</label><input type="number" id="p_lsp" value="2534" step="20"><span class="field-hint">Обязательно</span></div>
+                <div class="input-group" style="border-top:1px dashed #d2d2d7; padding-top:10px; grid-column:1/-1;"><span style="font-weight:600; font-size:0.65rem; color:#6e6e73;">Заполните одно из двух</span></div>
+                <div class="input-group"><label>Ндин (замер), м</label><input type="number" id="p_ndyn" value="" step="10"><span class="field-hint">Если известен уровень</span></div>
+                <div class="input-group"><label>P_ТМС (на приёме), атм</label><input type="number" id="p_ptms" value="56" step="2"><span class="field-hint">Если известно давление</span></div>
+                <div class="input-group" style="border-top:1px dashed #d2d2d7; padding-top:10px; grid-column:1/-1;"><span style="font-weight:600; font-size:0.65rem; color:#6e6e73;">Опционально: глубинный датчик</span></div>
+                <div class="input-group"><label>P_дат, атм</label><input type="number" id="p_phd" value="31" step="5"><span class="field-hint">Если есть датчик</span></div>
+                <div class="input-group"><label>H_дат, м</label><input type="number" id="p_lphd" value="2440" step="20"><span class="field-hint">Глубина датчика</span></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📏 Ндин (используемый)</span><span class="result-value" id="p_ndyn_used">—</span></div>
+                <div class="result-row"><span class="result-label">📊 P_ТМС (используемое)</span><span class="result-value" id="p_ptms_used">—</span></div>
+                <div class="result-row"><span class="result-label">💧 Высота жидкости над приёмом</span><span class="result-value" id="p_h_above_pump">—</span></div>
+                <div class="result-row" style="border-top:1px solid #d2d2d7; padding-top:6px; margin-top:4px;"><span class="result-label" style="font-size:0.65rem; color:#6e6e73;">Проверка (если введены оба):</span></div>
+                <div class="result-row"><span class="result-label">📏 Ндин (из P_ТМС)</span><span class="result-value" id="p_ndyn_from_ptms">—</span></div>
+                <div class="result-row"><span class="result-label">📊 P_ТМС (из Ндин)</span><span class="result-value" id="p_ptms_from_ndyn">—</span></div>
+                <div class="result-row"><span class="result-label">⚠️ Расхождение</span><span class="result-value" id="p_diff_ndyn_ptms">—</span></div>
+                <div class="result-row" style="border-top:1px solid #d2d2d7; padding-top:6px; margin-top:4px;"><span class="result-label" style="font-size:0.65rem; color:#6e6e73;">Pзаб по датчику:</span></div>
+                <div class="result-row"><span class="result-label">📊 Pзаб</span><span class="result-value" id="p_pzab_phd">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab3">📄 PDF</button><button class="small-btn export-excel" data-module="tab3">📎 Excel</button></div>
+            <div class="warning-note">💡 Введите Pзатр, L и обводнённость. Затем либо Ндин, либо P_ТМС. Калькулятор вычислит недостающее.</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 4: КАБЕЛЬ И ПЭД ===== -->
+    <div id="tab4" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>🔌 Кабель, отпайка и ПЭД</h2><span class="badge">потери, отпайка, запас мощности</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>U двигателя, В</label><input type="number" id="cbl_uped" value="2000" step="50"><span class="field-hint">Паспорт ПЭД</span></div>
+                <div class="input-group"><label>I номинальный, А</label><input type="number" id="cbl_inom" value="42" step="2"><span class="field-hint">Паспорт ПЭД</span></div>
+                <div class="input-group"><label>I фактический (по высокой), А</label><input type="number" id="cbl_ifact" value="" step="1" placeholder="опционально"><span class="field-hint">Для загрузки и мощности</span></div>
+                <div class="input-group"><label>L кабеля, м</label><input type="number" id="cbl_len" value="2467" step="50"><span class="field-hint">Глубина + 50м</span></div>
+                <div class="input-group"><label>Сечение кабеля, мм²</label><select id="cbl_sec"><option value="10">10</option><option value="16" selected>16</option><option value="25">25</option><option value="35">35</option><option value="50">50</option></select><span class="field-hint">По току ПЭД</span></div>
+                <div class="input-group"><label>Планируемая частота (для отпайки ЧРП), Гц</label><input type="number" id="cbl_freq" value="55" step="1"><span class="field-hint">Для расчёта отпайки ЧРП</span></div>
+                <div class="input-group"><label>Тип двигателя</label><select id="cbl_motor"><option value="std">Стандартный ПЭД</option><option value="ved">ВЭД (+20%)</option></select></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">🔌 Потери в кабеле</span><span class="result-value" id="cbl_loss">—</span></div>
+                <div class="result-row"><span class="result-label">📈 Отпайка ПП</span><span class="result-value" id="cbl_otp_pp">—</span></div>
+                <div class="result-row"><span class="result-label">⚡ Отпайка ЧРП (50 Гц)</span><span class="result-value" id="cbl_otp_chrp_50">—</span></div>
+                <div class="result-row"><span class="result-label">⚡ Отпайка ЧРП (заданная частота)</span><span class="result-value" id="cbl_otp_chrp_freq">—</span></div>
+                <div class="result-row"><span class="result-label">⚡ Отпайка ЧРП (ВЭД, заданная частота)</span><span class="result-value" id="cbl_otp_ved_freq">—</span></div>
+                <div class="result-row"><span class="result-label">📈 Загрузка ПЭД</span><span class="result-value" id="cbl_load">—</span></div>
+                <div class="result-row"><span class="result-label">⚙️ Мощность на валу</span><span class="result-value" id="cbl_shaft">—</span></div>
+            </div>
+            <div class="section-divider">━━━ Расчёт запаса мощности ПЭД ━━━</div>
+            <div class="form-grid">
+                <div class="input-group"><label>Мощность на валу при 50 Гц (из ПСИ), кВт</label><input type="number" id="ped_p_shaft_50" value="175" step="5"></div>
+                <div class="input-group"><label>Номинальная мощность ПЭД, кВт</label><input type="number" id="ped_p_ped_nom" value="300" step="10"></div>
+                <div class="input-group"><label>Макс. мощность, передаваемая валом, кВт</label><input type="number" id="ped_p_shaft_max" value="290" step="10"></div>
+                <div class="input-group"><label>Частота для расчёта запаса, Гц</label><input type="number" id="ped_freq_margin" value="50" step="1"></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📊 Мощность на валу на частоте</span><span class="result-value" id="ped_shaft_freq">—</span></div>
+                <div class="result-row"><span class="result-label">⚡ Мощность ПЭД на частоте</span><span class="result-value" id="ped_ped_freq">—</span></div>
+                <div class="result-row"><span class="result-label">📈 Запас мощности ПЭД, %</span><span class="result-value" id="ped_margin_ped">—</span></div>
+                <div class="result-row"><span class="result-label">🛡️ Запас прочности вала, %</span><span class="result-value" id="ped_margin_shaft">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab4">📄 PDF</button><button class="small-btn export-excel" data-module="tab4">📎 Excel</button></div>
+            <div class="warning-note">💡 Отпайка ЧРП 50 Гц = отпайка ПП + 30 В. Для других частот – пропорционально. Для ВЭД +20%. Запас ПЭД ≥15%, запас вала ≥20%.</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 5: НАПОР ===== -->
+    <div id="tab5" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>📈 Запас напора</h2><span class="badge">Lверт = L — Hсп</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>L (по стволу), м</label><input type="number" id="head_l" value="2990" step="10"><span class="field-hint">Акт спуска</span></div>
+                <div class="input-group"><label>Hсп (удлинение), м</label><input type="number" id="head_elong" value="365" step="10"><span class="field-hint">Инклинометрия</span></div>
+                <div class="input-group"><label>Напор при 50 Гц, м</label><input type="number" id="head_h50" value="2570" step="50"><span class="field-hint">Каталог</span></div>
+                <div class="input-group"><label>Текущая F, Гц</label><input type="number" id="head_f" value="50" step="1"><span class="field-hint">ЧРП</span></div>
+                <div class="input-group"><label>Рбуф, атм</label><input type="number" id="head_rbuf" value="34" step="2"><span class="field-hint">Буфер</span></div>
+                <div class="input-group"><label>Рзатр, атм</label><input type="number" id="head_rzatr" value="21.4" step="2"><span class="field-hint">Затрубье</span></div>
+                <div class="input-group"><label>ρ, кг/м³</label><input type="number" id="head_rho" value="823" step="10"><span class="field-hint">По обводнённости</span></div>
+                <div class="input-group"><label>ТМС рабочий?</label><select id="head_tms"><option value="work">✅ Рабочий</option><option value="fail">❌ Не рабочий</option></select></div>
+                <div class="input-group" id="head_ptms_group"><label>Ртмс, атм</label><input type="number" id="head_ptms" value="175.1" step="5"></div>
+                <div class="input-group" id="head_ndin_group" style="display:none;"><label>Ндин (вертикальный), м</label><input type="number" id="head_ndin_man" value="1088" step="50"></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📐 Lверт</span><span class="result-value" id="head_lvert">—</span></div>
+                <div class="result-row"><span class="result-label">🎯 Напор на F</span><span class="result-value" id="head_hcur">—</span></div>
+                <div class="result-row"><span class="result-label">📏 Ндин (вертикальный)</span><span class="result-value" id="head_ndin">—</span></div>
+                <div class="result-row"><span class="result-label">⚠️ Запас напора</span><span class="result-value" id="head_margin">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab5">📄 PDF</button><button class="small-btn export-excel" data-module="tab5">📎 Excel</button></div>
+            <div id="head_warning" class="warning-note">💡 Положительный запас — насос работает с запасом</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 6: ЧРП ===== -->
+    <div id="tab6" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>🎛️ Частотное регулирование (ЧРП)</h2><span class="badge">законы подобия</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>F₁, Гц</label><input type="number" id="chrp_f1" value="50" step="1"></div>
+                <div class="input-group"><label>F₂, Гц</label><input type="number" id="chrp_f2" value="55" step="1"></div>
+                <div class="input-group"><label>Q₁, м³/сут</label><input type="number" id="chrp_q1" value="100" step="10"></div>
+                <div class="input-group"><label>H₁, м</label><input type="number" id="chrp_h1" value="2000" step="50"></div>
+                <div class="input-group"><label>N ПЭД₁, кВт</label><input type="number" id="chrp_n1_ped" value="63" step="5"></div>
+                <div class="input-group"><label>N ЭЦН₁, кВт</label><input type="number" id="chrp_n1_nas" value="34.2" step="5"></div>
+                <div class="input-group"><label>U₁, В</label><input type="number" id="chrp_u1" value="2200" step="50"></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📊 Q₂</span><span class="result-value" id="chrp_q2">—</span></div>
+                <div class="result-row"><span class="result-label">📈 H₂</span><span class="result-value" id="chrp_h2">—</span></div>
+                <div class="result-row"><span class="result-label">⚡ N ПЭД₂</span><span class="result-value" id="chrp_n2_ped">—</span></div>
+                <div class="result-row"><span class="result-label">⚡ N ЭЦН₂</span><span class="result-value" id="chrp_n2_nas">—</span></div>
+                <div class="result-row"><span class="result-label">🔌 U₂</span><span class="result-value" id="chrp_u2">—</span></div>
+                <div class="result-row"><span class="result-label">⚠️ Fmax</span><span class="result-value" id="chrp_fmax">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab6">📄 PDF</button><button class="small-btn export-excel" data-module="tab6">📎 Excel</button></div>
+            <div class="warning-note">💡 Q₂ = Q₁ × F₂/F₁ | H₂ = H₁ × (F₂/F₁)² | N₂(ЭЦН) = N₁ × (F₂/F₁)³ | Fmax = F₁ × √(Nпэд/Nэцн)</div>
+            <div class="example-accordion">
+                <details><summary>📘 1. Мощность ПЭД (прямая)</summary><div class="example-content"><p><strong>Формула:</strong> <span class="formula">N₂ = N₁ × (F₂/F₁)</span></p><p><strong>Пример:</strong> 63 кВт при 50 Гц → 55 Гц = 69,3 кВт</p></div></details>
+                <details><summary>📘 2. Мощность ЭЦН (кубическая)</summary><div class="example-content"><p><strong>Формула:</strong> <span class="formula">N₂ = N₁ × (F₂/F₁)³</span></p><p><strong>Пример:</strong> 34,2 кВт при 50 Гц → 60 Гц = 59,1 кВт</p></div></details>
+                <details><summary>📘 3. Максимальная частота</summary><div class="example-content"><p><strong>Формула:</strong> <span class="formula">Fmax = F₁ × √(Nпэд/Nэцн)</span></p><p><strong>Пример:</strong> ПЭД 90 кВт, ЭЦН 62 кВт → Fmax = 60,2 Гц</p></div></details>
+                <details><summary>📘 4. Производительность</summary><div class="example-content"><p><strong>Формула:</strong> <span class="formula">Q₂ = Q₁ × (F₂/F₁)</span></p><p><strong>Пример:</strong> 48 м³/сут при 50 Гц → 60 Гц = 57,6</p></div></details>
+                <details><summary>📘 5. Напор</summary><div class="example-content"><p><strong>Формула:</strong> <span class="formula">H₂ = H₁ × (F₂/F₁)²</span></p><p><strong>Пример:</strong> 2000 м при 50 Гц → 58 Гц = 2691 м</p></div></details>
+                <details><summary>📘 6. Напряжение</summary><div class="example-content"><p><strong>Формула:</strong> <span class="formula">U₂ = U₁ × (F₂/F₁)</span></p><p><strong>Пример:</strong> 2200 В при 50 Гц → 65 Гц = 2860 В</p></div></details>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 7: ГАЗ ===== -->
+    <div id="tab7" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>💨 Свободный газ</h2><span class="badge">газосодержание β</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>GOR, м³/м³</label><input type="number" id="gas_gor" value="8.5" step="0.5"></div>
+                <div class="input-group"><label>ρн, т/м³</label><input type="number" id="gas_roil" value="0.857" step="0.01"></div>
+                <div class="input-group"><label>Pнас, атм</label><input type="number" id="gas_psat" value="144" step="5"></div>
+                <div class="input-group"><label>Pзаб, атм</label><input type="number" id="gas_pzab" value="48" step="5"></div>
+                <div class="input-group"><label>Pпр, атм</label><input type="number" id="gas_ppr" value="33" step="5"></div>
+                <div class="input-group"><label>Qж, м³/сут</label><input type="number" id="gas_q" value="89.4" step="10"></div>
+                <div class="input-group"><label>Обводнённость, %</label><input type="number" id="gas_wc" value="4.1" step="1"></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📐 α</span><span class="result-value" id="gas_alpha">—</span></div>
+                <div class="result-row"><span class="result-label">💨 Газ на забое</span><span class="result-value" id="gas_free_zab">—</span></div>
+                <div class="result-row"><span class="result-label">💨 Газ на приёме</span><span class="result-value" id="gas_free_pr">—</span></div>
+                <div class="result-row"><span class="result-label">📊 β</span><span class="result-value" id="gas_beta">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab7">📄 PDF</button><button class="small-btn export-excel" data-module="tab7">📎 Excel</button></div>
+            <div id="gas_recommend" class="warning-note">💡 β > 25% — критическое газосодержание</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 8: ОБЪЁМЫ И ЖИДКОСТЬ ===== -->
+    <div id="tab8" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>💧 Жидкость, нефть, % воды</h2><span class="badge">3 варианта расчёта</span></div>
+            <div class="fluid-grid">
+                <div class="fluid-item">
+                    <div style="font-weight:600; font-size:0.75rem; color:#6e6e73; margin-bottom:8px;">1. Qн = Qж × (1 – %H2O) × ρн</div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group"><label>%H2O</label><input type="number" id="fl1_wc" value="82" step="0.1"></div>
+                        <div class="input-group"><label>Qж, м³/сут</label><input type="number" id="fl1_q" value="16" step="0.1"></div>
+                        <div class="input-group"><label>ρн, т/м³</label><input type="number" id="fl1_roil" value="0.862" step="0.001"></div>
+                    </div>
+                    <div class="result-row"><span class="result-label">📊 Qн, т/сут</span><span class="result-value" id="fl1_result">—</span></div>
+                </div>
+                <div class="fluid-item">
+                    <div style="font-weight:600; font-size:0.75rem; color:#6e6e73; margin-bottom:8px;">2. %H2O = (Qж×ρ – Qн) / (Qж×ρ) × 100</div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group"><label>Qж, м³/сут</label><input type="number" id="fl2_q" value="27" step="0.1"></div>
+                        <div class="input-group"><label>Qн, т/сут</label><input type="number" id="fl2_qn" value="9" step="0.1"></div>
+                        <div class="input-group"><label>ρн, т/м³</label><input type="number" id="fl2_roil" value="0.835" step="0.001"></div>
+                    </div>
+                    <div class="result-row"><span class="result-label">📊 %H2O</span><span class="result-value" id="fl2_result">—</span></div>
+                </div>
+                <div class="fluid-item">
+                    <div style="font-weight:600; font-size:0.75rem; color:#6e6e73; margin-bottom:8px;">3. Qж = Qн / ((1 – %H2O) × ρн)</div>
+                    <div class="form-grid" style="grid-template-columns:1fr 1fr; gap:8px;">
+                        <div class="input-group"><label>%H2O</label><input type="number" id="fl3_wc" value="85" step="0.1"></div>
+                        <div class="input-group"><label>Qн, т/сут</label><input type="number" id="fl3_qn" value="15.7" step="0.1"></div>
+                        <div class="input-group"><label>ρн, т/м³</label><input type="number" id="fl3_roil" value="0.835" step="0.001"></div>
+                    </div>
+                    <div class="result-row"><span class="result-label">📊 Qж, м³/сут</span><span class="result-value" id="fl3_result">—</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h2>🔧 Объём прокачки коллектора</h2><span class="badge">V = π × (dвн/2)² × L</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>Диаметр трубы (d), мм</label><input type="number" id="coll_d" value="114" step="1"><span class="field-hint">Наружный диаметр</span></div>
+                <div class="input-group"><label>Толщина стенки (h), мм</label><input type="number" id="coll_h" value="8" step="0.5"><span class="field-hint">Толщина стенки</span></div>
+                <div class="input-group"><label>Длина трубы (L), м</label><input type="number" id="coll_l" value="500" step="10"><span class="field-hint">Длина коллектора</span></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📦 Объём прокачки, м³</span><span class="result-value" id="coll_result">—</span></div>
+                <div class="result-row"><span class="result-label">📏 Внутренний диаметр, мм</span><span class="result-value" id="coll_d_inner">—</span></div>
+            </div>
+            <div class="warning-note" style="margin-top:8px;">💡 V = π × ((d – 2h)/1000)² / 4 × L</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h2>📏 Объём затрубного пространства Vзатр</h2><span class="badge">м/у Э/К и НКТ</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+                <span style="font-weight:500; font-size:0.75rem; color:#6e6e73;">Таблица секций</span>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" id="addSectionBtn" class="small-btn" style="background:#0071e3; color:#fff; border-color:#0071e3;">➕ Добавить</button>
+                    <button type="button" id="removeLastSectionBtn" class="small-btn" style="background:#fff; color:#b91c1c; border-color:#b91c1c;">🗑️ Удалить</button>
+                </div>
+            </div>
+            <div class="sections-table-wrap">
+                <table class="sections-table">
+                    <thead><tr><th>Dэ/к, мм</th><th>Sэ/к, мм</th><th>Dнкт, мм</th><th>L НКТ, м</th><th>V, м³</th><th></th></tr></thead>
+                    <tbody id="annulusTbody"></tbody>
+                    <tfoot><tr class="section-total"><td colspan="3"><strong>ИТОГО:</strong></td><td id="totalLength"><strong>0</strong> м</td><td id="totalVolume"><strong>0,00</strong> м³</td><td></td></tr></tfoot>
+                </table>
+            </div>
+            <span class="field-hint">V = ((π×(Dэк-2×Sэк)²/4) — (π×Dнкт²/4)) × L / 1e6</span>
+            <div class="result-area" style="margin-top:12px;">
+                <div class="result-row"><span class="result-label">📦 Общий Vзатр</span><span class="result-value" id="vkp_total_display">—</span></div>
+                <div class="result-row"><span class="result-label">📏 Общая длина</span><span class="result-value" id="total_length_display">—</span></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h2>📏 Объём НКТ (Vнкт)</h2><span class="badge">по секциям</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap;">
+                <span style="font-weight:500; font-size:0.75rem; color:#6e6e73;">Таблица секций</span>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" id="addNktSectionBtn" class="small-btn" style="background:#0071e3; color:#fff; border-color:#0071e3;">➕ Добавить</button>
+                    <button type="button" id="removeLastNktSectionBtn" class="small-btn" style="background:#fff; color:#b91c1c; border-color:#b91c1c;">🗑️ Удалить</button>
+                </div>
+            </div>
+            <div class="sections-table-wrap">
+                <table class="sections-table">
+                    <thead><tr><th>Диаметр НКТ, мм</th><th>Толщина стенки, мм</th><th>Внутренний диаметр, мм</th><th>Длина секции, м</th><th>Объём секции, м³</th><th></th></tr></thead>
+                    <tbody id="nktTbody"></tbody>
+                    <tfoot><tr class="section-total"><td colspan="3"><strong>ИТОГО:</strong></td><td id="nktTotalLength"><strong>0</strong> м</td><td id="nktTotalVolume"><strong>0,00</strong> м³</td><td></td></tr></tfoot>
+                </table>
+            </div>
+            <span class="field-hint">V = π × (Dвн/1000)² / 4 × L, где Dвн = Dнкт − 2×S</span>
+            <div class="result-area" style="margin-top:12px;">
+                <div class="result-row"><span class="result-label">📦 Общий Vнкт</span><span class="result-value" id="nkt_total_display">—</span></div>
+                <div class="result-row"><span class="result-label">📏 Общая длина</span><span class="result-value" id="nkt_length_display">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab8">📄 PDF</button><button class="small-btn export-excel" data-module="tab8">📎 Excel</button></div>
+            <div class="warning-note">💡 Объёмы используются для расчёта жидкости в колонне, времени реакции и при глушении.</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 9: ОХЛАЖДЕНИЕ ПЭД ===== -->
+    <div id="tab9" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>❄️ Минимальный приток для охлаждения ПЭД</h2><span class="badge">тепловой баланс</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>Мощность ПЭД, кВт</label><input type="number" id="cool_ped_power" value="300" step="10"><span class="field-hint">Номинальная мощность</span></div>
+                <div class="input-group"><label>КПД ПЭД, %</label><input type="number" id="cool_ped_efficiency" value="85" step="1"><span class="field-hint">Паспортный КПД</span></div>
+                <div class="input-group"><label>Теплоёмкость жидкости, Дж/(кг·°C)</label><input type="number" id="cool_cp" value="2200" step="100"><span class="field-hint">Для воды ~4200, для нефти ~2000</span></div>
+                <div class="input-group"><label>Плотность жидкости, кг/м³</label><input type="number" id="cool_rho" value="850" step="10"><span class="field-hint">Из модуля "Давления"</span></div>
+                <div class="input-group"><label>Допустимый нагрев ΔT, °C</label><input type="number" id="cool_dt" value="10" step="1"><span class="field-hint">Рекомендуется 5-15°C</span></div>
+                <div class="input-group"><label>Коэффициент запаса</label><input type="number" id="cool_safety" value="1.2" step="0.05"><span class="field-hint">1.2 — запас 20%</span></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">🔥 Тепловыделение ПЭД, кВт</span><span class="result-value" id="cool_heat">—</span></div>
+                <div class="result-row"><span class="result-label">💧 Минимальный приток (без запаса), м³/сут</span><span class="result-value" id="cool_qmin">—</span></div>
+                <div class="result-row"><span class="result-label">💧 Минимальный приток (с запасом), м³/сут</span><span class="result-value" id="cool_qmin_safe">—</span></div>
+                <div class="result-row"><span class="result-label">📊 Текущий приток (рекомендуется ввести), м³/сут</span><span class="result-value" id="cool_current_q">—</span></div>
+                <div class="result-row"><span class="result-label">✅ Статус охлаждения</span><span class="result-value" id="cool_status">—</span></div>
+            </div>
+            <div class="form-grid" style="margin-top:8px;">
+                <div class="input-group"><label>Текущий приток (для проверки), м³/сут</label><input type="number" id="cool_current_q_input" value="300" step="10"></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab9">📄 PDF</button><button class="small-btn export-excel" data-module="tab9">📎 Excel</button></div>
+            <div id="cool_warning" class="warning-note info-note">💡 Расчёт основан на тепловом балансе: Qmin = (P_пэд × (1-КПД)) / (ρ × Cp × ΔT). Запас рекомендуется 15-25%.</div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 10: ШТУЦЕР (ОБНОВЛЁННЫЙ) ===== -->
+    <div id="tab10" class="tab-content">
+        <div class="card">
+            <div class="card-header">
+                <h2>🔧 Расчёт диаметра штуцера</h2>
+                <span class="badge">выбор типа штуцера</span>
+            </div>
+            
+            <!-- Визуальная схема -->
+            <div class="choke-diagram">
+                <div class="pipe">
+                    <span style="font-size:0.8rem; font-weight:600;">P₁</span>
+                    <span style="font-size:1.2rem;">⬅️</span>
+                    <span class="pipe-label">До штуцера</span>
+                </div>
+                <div class="pipe" style="border:2px solid #0071e3; border-radius:12px; padding:8px 20px; background:#e8f2ff;">
+                    <span style="font-weight:700; color:#0071e3;">🔧 ШТУЦЕР</span>
+                    <span class="pipe-label">d = ? мм</span>
+                </div>
+                <div class="pipe">
+                    <span style="font-size:0.8rem; font-weight:600;">P₂</span>
+                    <span style="font-size:1.2rem;">➡️</span>
+                    <span class="pipe-label">После штуцера</span>
+                </div>
+                <div class="arrow">ΔP = P₁ − P₂</div>
+            </div>
+
+            <!-- Пояснение -->
+            <div class="warning-note" style="border-left-color:#0071e3; margin-bottom:16px;">
+                💡 <strong>Как это работает:</strong> Штуцер — это калиброванное отверстие для создания перепада давления. 
+                Расчёт основан на формуле истечения жидкости. <br>
+                <span style="font-size:0.65rem; color:#6e6e73;">
+                    Q = C × A × √(2×ΔP/ρ) → A = Q / (C × √(2×ΔP/ρ)) → d = √(4A/π)
+                </span>
+            </div>
+
+            <div class="form-grid">
+                <!-- 1. Расход -->
+                <div class="input-group">
+                    <label>Расход жидкости Q, м³/сут</label>
+                    <input type="number" id="choke_q" value="200" step="10">
+                    <span class="field-hint">Какой дебит хотите получить после штуцера</span>
+                </div>
+
+                <!-- 2. Перепад давления -->
+                <div class="input-group">
+                    <label>Перепад давления ΔP, атм</label>
+                    <input type="number" id="choke_dp" value="25" step="1">
+                    <span class="field-hint">P₁ – P₂ (до и после штуцера)</span>
+                </div>
+
+                <!-- 3. Плотность (автоподстановка) -->
+                <div class="input-group">
+                    <label>Плотность жидкости ρ, кг/м³</label>
+                    <input type="number" id="choke_rho" value="850" step="10">
+                    <span class="field-hint">Автоматически из модуля "Давления"</span>
+                </div>
+
+                <!-- 4. ТИП ШТУЦЕРА (выпадающий список) -->
+                <div class="input-group">
+                    <label>Тип штуцера</label>
+                    <select id="choke_c_type">
+                        <option value="0.62">🔹 Острая кромка (C = 0.62)</option>
+                        <option value="0.68" selected>🔸 Закруглённый вход (C = 0.68)</option>
+                        <option value="0.90">🔹 Коническое сопло (C = 0.90)</option>
+                        <option value="0.54">🔸 Длинный цилиндрический (C = 0.54)</option>
+                        <option value="0.65">🔹 Универсальный (C = 0.65)</option>
+                    </select>
+                    <span class="field-hint">Выберите конструкцию штуцера</span>
+                </div>
+            </div>
+
+            <!-- Скрытое поле для хранения C -->
+            <input type="hidden" id="choke_c" value="0.68">
+
+            <div class="result-area">
+                <div class="result-row">
+                    <span class="result-label">🔧 Расчётный диаметр штуцера d, мм</span>
+                    <span class="result-value" id="choke_result">—</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">📐 Площадь прохода, мм²</span>
+                    <span class="result-value" id="choke_area">—</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">⚠️ Рекомендуемый стандартный диаметр, мм</span>
+                    <span class="result-value" id="choke_std">—</span>
+                </div>
+                <div class="result-row" style="border-top:1px solid #d2d2d7; padding-top:6px; margin-top:4px;">
+                    <span class="result-label" style="font-size:0.65rem; color:#6e6e73;">📊 Используемый коэффициент расхода C</span>
+                    <span class="result-value" id="choke_c_display" style="font-size:0.75rem;">—</span>
+                </div>
+            </div>
+
+            <div class="button-bar">
+                <button class="small-btn export-pdf" data-module="tab10">📄 PDF</button>
+                <button class="small-btn export-excel" data-module="tab10">📎 Excel</button>
+            </div>
+
+            <div class="warning-note" style="border-left-color:#34c759;">
+                ✅ <strong>Рекомендация:</strong> Стандартные диаметры штуцеров: 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 35, 38, 40, 45, 50 мм.
+                <br>Если расчётный диаметр между двумя стандартными — берите <strong>больший</strong>.
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== МОДУЛЬ 11: ГЛУШЕНИЕ ===== -->
+    <div id="tab11" class="tab-content">
+        <div class="card">
+            <div class="card-header"><h2>🧪 Расчёт глушения скважины</h2><span class="badge">объём и давление</span></div>
+            <div class="form-grid">
+                <div class="input-group"><label>Глубина скважины H, м</label><input type="number" id="kill_h" value="2500" step="50"><span class="field-hint">Вертикальная глубина</span></div>
+                <div class="input-group"><label>Диаметр НКТ (внутренний), мм</label><input type="number" id="kill_d_nkt" value="62" step="1"><span class="field-hint">Внутренний диаметр НКТ</span></div>
+                <div class="input-group"><label>Диаметр обсадной колонны (внутренний), мм</label><input type="number" id="kill_d_ok" value="146" step="1"><span class="field-hint">Внутренний диаметр обсадки</span></div>
+                <div class="input-group"><label>Плотность жидкости в скважине, кг/м³</label><input type="number" id="kill_rho_well" value="850" step="10"><span class="field-hint">Текущая жидкость</span></div>
+                <div class="input-group"><label>Плотность жидкости глушения, кг/м³</label><input type="number" id="kill_rho_kill" value="1100" step="10"><span class="field-hint">Плотность раствора для глушения</span></div>
+                <div class="input-group"><label>Пластовое давление Pпл, атм</label><input type="number" id="kill_ppl" value="240" step="5"><span class="field-hint">Из модуля "Приток"</span></div>
+                <div class="input-group"><label>Коэффициент запаса</label><input type="number" id="kill_safety" value="1.15" step="0.01"><span class="field-hint">Рекомендуется 1.1-1.2</span></div>
+            </div>
+            <div class="result-area">
+                <div class="result-row"><span class="result-label">📦 Объём НКТ, м³</span><span class="result-value" id="kill_v_nkt">—</span></div>
+                <div class="result-row"><span class="result-label">📦 Объём затрубья, м³</span><span class="result-value" id="kill_v_annulus">—</span></div>
+                <div class="result-row"><span class="result-label">📦 Общий объём для глушения, м³</span><span class="result-value" id="kill_v_total">—</span></div>
+                <div class="result-row"><span class="result-label">📊 Давление глушения на устье, атм</span><span class="result-value" id="kill_p_wellhead">—</span></div>
+                <div class="result-row"><span class="result-label">📊 Давление глушения на забое, атм</span><span class="result-value" id="kill_p_bottom">—</span></div>
+                <div class="result-row"><span class="result-label">📊 Запас давления, атм</span><span class="result-value" id="kill_p_margin">—</span></div>
+            </div>
+            <div class="button-bar"><button class="small-btn export-pdf" data-module="tab11">📄 PDF</button><button class="small-btn export-excel" data-module="tab11">📎 Excel</button></div>
+            <div id="kill_warning" class="warning-note">💡 Давление на забое = Pпл × запас. Объём глушения = Vнкт + Vзатр. Давление на устье = Pзаб - ρ_гл × g × H / 10000.</div>
+        </div>
+    </div>
+
+    <footer>Инженерный калькулятор · Расчёт параметров УЭЦН · Версия 2.0 · Автор: Носар А.И.</footer>
+</div>
+
+<script>
+// ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+
+// ---------- АПВ ----------
+function updateAPV() {
+    let qpump = parseFloat(document.getElementById('apv_qpump').value) || 0;
+    let qinf = parseFloat(document.getElementById('apv_qinflow').value) || 0;
+    let cycles = parseFloat(document.getElementById('apv_cycles').value) || 1;
+    let workHr = 0, stopHr = 0;
+    if (qpump > 0 && cycles > 0) {
+        workHr = (qinf / qpump) * 24 / cycles;
+        let cycleHr = 24 / cycles;
+        stopHr = cycleHr - workHr;
+        if (stopHr < 0) stopHr = 0;
+    }
+    document.getElementById('apv_work_recommended').innerHTML = (workHr*60).toFixed(1)+" мин";
+    document.getElementById('apv_stop_recommended').innerHTML = (stopHr*60).toFixed(1)+" мин";
+    let pumpT = parseFloat(document.getElementById('apv_pump_t').value) || 0;
+    let accumT = parseFloat(document.getElementById('apv_accum_t').value) || 0;
+    let cycleTimeMin = (24 / cycles) * 60;
+    let workMin = pumpT, stopMin = accumT;
+    if (workMin + stopMin > cycleTimeMin && cycleTimeMin > 0) {
+        workMin = Math.min(workMin, cycleTimeMin);
+        stopMin = cycleTimeMin - workMin;
+        if (stopMin < 0) stopMin = 0;
+    }
+    let avg = 0; if (cycleTimeMin > 0) avg = qpump * (workMin / cycleTimeMin);
+    let util = 0; if (workMin + stopMin > 0) util = (workMin / (workMin + stopMin)) * 100;
+    document.getElementById('apv_avg').innerHTML = avg.toFixed(2)+" м³/сут";
+    document.getElementById('apv_util').innerHTML = util.toFixed(1)+" %";
+}
+
+// ---------- Приток ----------
+function updateKpr() {
+    let q1 = parseFloat(document.getElementById('kpr1_q').value) || 0;
+    let ppl1 = parseFloat(document.getElementById('kpr1_ppl').value) || 0;
+    let pzab1 = parseFloat(document.getElementById('kpr1_pzab').value) || 0;
+    let kpr1 = (ppl1 - pzab1) !== 0 ? q1 / (ppl1 - pzab1) : 0;
+    document.getElementById('kpr1_result').innerHTML = kpr1.toFixed(5);
+
+    let kpr2 = parseFloat(document.getElementById('kpr2_kpr').value) || 0;
+    let ppl2 = parseFloat(document.getElementById('kpr2_ppl').value) || 0;
+    let pzab2 = parseFloat(document.getElementById('kpr2_pzab').value) || 0;
+    let q2 = kpr2 * (ppl2 - pzab2);
+    document.getElementById('kpr2_result').innerHTML = q2.toFixed(2);
+
+    let q3 = parseFloat(document.getElementById('kpr3_q').value) || 0;
+    let kpr3 = parseFloat(document.getElementById('kpr3_kpr').value) || 0;
+    let pzab3 = parseFloat(document.getElementById('kpr3_pzab').value) || 0;
+    let ppl3 = (kpr3 !== 0) ? q3 / kpr3 + pzab3 : 0;
+    document.getElementById('kpr3_result').innerHTML = ppl3.toFixed(2);
+
+    let q4 = parseFloat(document.getElementById('kpr4_q').value) || 0;
+    let kpr4 = parseFloat(document.getElementById('kpr4_kpr').value) || 0;
+    let ppl4 = parseFloat(document.getElementById('kpr4_ppl').value) || 0;
+    let pzab4 = (kpr4 !== 0) ? ppl4 - q4 / kpr4 : 0;
+    document.getElementById('kpr4_result').innerHTML = pzab4.toFixed(2);
+}
+
+function updatePpr() {
+    let wc = parseFloat(document.getElementById('ppr_wc').value) || 0;
+    let ndyn = parseFloat(document.getElementById('ppr_ndyn').value) || 0;
+    let lsp = parseFloat(document.getElementById('ppr_lsp').value) || 0;
+    let rho = 0.15 * wc + 85;
+    let ppr = (lsp - ndyn) * rho * 9.81 / 10000;
+    if (ppr < 0) ppr = 0;
+    document.getElementById('ppr_result').innerHTML = ppr.toFixed(2) + " атм";
+    document.getElementById('ppr_rho').innerHTML = rho.toFixed(1) + " кг/м³";
+}
+
+function updateQin() {
+    let v = parseFloat(document.getElementById('qin_v').value) || 0;
+    let dt = parseFloat(document.getElementById('qin_dt').value) || 1;
+    let gzu = parseFloat(document.getElementById('qin_gzu').value) || 0;
+    let qz = (dt > 0) ? v * 24 / dt : 0;
+    let qpl = gzu - qz;
+    if (qpl < 0) qpl = 0;
+    document.getElementById('qin_qz').innerHTML = qz.toFixed(2) + " м³/сут";
+    document.getElementById('qin_qpl').innerHTML = qpl.toFixed(2) + " м³/сут";
+}
+
+// ---------- Давления ----------
+function updateDynamicLevel() {
+    let pzatr = parseFloat(document.getElementById('p_pzatr').value) || 0;
+    let lsp = parseFloat(document.getElementById('p_lsp').value) || 0;
+    let wc = parseFloat(document.getElementById('p_wc').value) || 0;
+    let simpleMode = document.getElementById('p_simple_rho').checked;
+    let rho;
+    if (simpleMode) {
+        rho = 85 + 0.15 * wc;
+    } else {
+        let roil = parseFloat(document.getElementById('p_roil').value) || 850;
+        let rwat = parseFloat(document.getElementById('p_rwat').value) || 1020;
+        rho = (roil * (100 - wc) + rwat * wc) / 100;
+    }
+    document.getElementById('p_rho_calc').innerHTML = rho.toFixed(1)+" кг/м³";
+    document.getElementById('p_roil_group').style.display = simpleMode ? 'none' : 'flex';
+    document.getElementById('p_rwat_group').style.display = simpleMode ? 'none' : 'flex';
+
+    let ndyn_input = parseFloat(document.getElementById('p_ndyn').value) || 0;
+    let ptms_input = parseFloat(document.getElementById('p_ptms').value) || 0;
+    let ndyn_used = 0, ptms_used = 0;
+    let ndyn_from_ptms = 0, ptms_from_ndyn = 0;
+    let diff_ndyn = 0, diff_ptms = 0;
+
+    if (ptms_input > 0 && rho > 0 && lsp > 0) {
+        ndyn_from_ptms = lsp - (ptms_input - pzatr) * 10000 / rho;
+        if (ndyn_from_ptms < 0) ndyn_from_ptms = 0;
+    }
+    if (ndyn_input > 0 && rho > 0 && lsp > 0) {
+        ptms_from_ndyn = pzatr + rho * (lsp - ndyn_input) / 10000;
+    }
+
+    if (ndyn_input > 0) {
+        ndyn_used = ndyn_input;
+        ptms_used = ptms_from_ndyn;
+    } else if (ptms_input > 0) {
+        ndyn_used = ndyn_from_ptms;
+        ptms_used = ptms_input;
+    }
+
+    if (ndyn_input > 0 && ptms_input > 0) {
+        diff_ndyn = ndyn_input - ndyn_from_ptms;
+        diff_ptms = ptms_input - ptms_from_ndyn;
+    }
+
+    let h_above = (ndyn_used > 0 && lsp > 0) ? (lsp - ndyn_used) : 0;
+
+    let pdat = parseFloat(document.getElementById('p_phd').value) || 0;
+    let hdat = parseFloat(document.getElementById('p_lphd').value) || 0;
+    let pzab_phd = "—";
+    if (pdat > 0 && hdat > 0 && ndyn_used > 0 && rho > 0) {
+        pzab_phd = (pdat + (hdat - ndyn_used) * rho / 10000).toFixed(2) + " атм";
+    }
+
+    document.getElementById('p_ndyn_used').innerHTML = ndyn_used > 0 ? ndyn_used.toFixed(1)+" м" : "—";
+    document.getElementById('p_ptms_used').innerHTML = ptms_used > 0 ? ptms_used.toFixed(2)+" атм" : "—";
+    document.getElementById('p_h_above_pump').innerHTML = h_above > 0 ? h_above.toFixed(1)+" м" : "—";
+    document.getElementById('p_ndyn_from_ptms').innerHTML = ndyn_from_ptms > 0 ? ndyn_from_ptms.toFixed(1)+" м" : "—";
+    document.getElementById('p_ptms_from_ndyn').innerHTML = ptms_from_ndyn > 0 ? ptms_from_ndyn.toFixed(2)+" атм" : "—";
+    if (ndyn_input > 0 && ptms_input > 0) {
+        document.getElementById('p_diff_ndyn_ptms').innerHTML = "ΔНдин = "+diff_ndyn.toFixed(1)+" м, ΔP = "+diff_ptms.toFixed(2)+" атм";
+    } else {
+        document.getElementById('p_diff_ndyn_ptms').innerHTML = "—";
+    }
+    document.getElementById('p_pzab_phd').innerHTML = pzab_phd;
+    
+    // Передаём плотность в другие модули
+    document.getElementById('cool_rho').value = rho.toFixed(0);
+    document.getElementById('choke_rho').value = rho.toFixed(0);
+    document.getElementById('kill_rho_well').value = rho.toFixed(0);
+}
+
+// ---------- Кабель ----------
+const lossTable = { 10: [5,6.5,8,10,11.5,13,15,16.5,18,19], 16: [3,4,5,6,7,8,9,10,11,12], 25: [2,2.5,3.5,4,4.5,5.5,6,7,7.5,9], 35: [1.3,2,2.5,3,3.5,4,4.5,5,5.5,6], 50: [1.1,1.6,2,2.3,2.7,3,3.4,3.8,4.2,4.6] };
+const currP = [15,20,25,30,35,40,45,50,55,60];
+function getLoss(sec, cur) { let a=lossTable[sec]; if(!a) return 0; if(cur<=currP[0]) return a[0]; if(cur>=currP[9]) return a[9]; for(let i=0;i<9;i++) if(cur>=currP[i]&&cur<=currP[i+1]) { let r=(cur-currP[i])/(currP[i+1]-currP[i]); return a[i]+r*(a[i+1]-a[i]); } return a[0]; }
+
+function updateCable() {
+    let uped = parseFloat(document.getElementById('cbl_uped').value) || 2000;
+    let inom = parseFloat(document.getElementById('cbl_inom').value) || 42;
+    let ifact = parseFloat(document.getElementById('cbl_ifact').value);
+    let len = parseFloat(document.getElementById('cbl_len').value) || 0;
+    let sec = parseInt(document.getElementById('cbl_sec').value);
+    let freq_cable = parseFloat(document.getElementById('cbl_freq').value) || 50;
+    let motor = document.getElementById('cbl_motor').value;
+
+    let loss = getLoss(sec, inom);
+    let dU = (len / 100) * loss;
+    let otp_pp = uped + dU;
+    let otp_chrp_50 = otp_pp + 30;
+    let otp_chrp_freq = otp_chrp_50 * (freq_cable / 50);
+    let otp_ved_freq = motor === 'ved' ? otp_chrp_freq * 1.2 : otp_chrp_freq;
+
+    let loadDisplay = "—";
+    let shaftDisplay = "—";
+    if (ifact && ifact > 0 && inom > 0) {
+        let load = (ifact / inom) * 100;
+        let shaftPower = (uped * ifact * 1.73 * 0.86 * 0.9) / 1000;
+        loadDisplay = load.toFixed(1) + " %";
+        shaftDisplay = shaftPower.toFixed(2) + " кВт";
+    }
+
+    document.getElementById('cbl_loss').innerHTML = dU.toFixed(2) + " В (" + loss.toFixed(2) + " В/100м)";
+    document.getElementById('cbl_otp_pp').innerHTML = otp_pp.toFixed(1) + " В";
+    document.getElementById('cbl_otp_chrp_50').innerHTML = otp_chrp_50.toFixed(1) + " В";
+    document.getElementById('cbl_otp_chrp_freq').innerHTML = otp_chrp_freq.toFixed(1) + " В";
+    document.getElementById('cbl_otp_ved_freq').innerHTML = otp_ved_freq.toFixed(1) + " В";
+    document.getElementById('cbl_load').innerHTML = loadDisplay;
+    document.getElementById('cbl_shaft').innerHTML = shaftDisplay;
+
+    let p_shaft_50 = parseFloat(document.getElementById('ped_p_shaft_50').value) || 0;
+    let p_ped_nom = parseFloat(document.getElementById('ped_p_ped_nom').value) || 0;
+    let p_shaft_max = parseFloat(document.getElementById('ped_p_shaft_max').value) || 0;
+    let freq_margin = parseFloat(document.getElementById('ped_freq_margin').value) || 50;
+
+    let shaft_freq = p_shaft_50 * Math.pow(freq_margin / 50, 3);
+    let ped_freq = p_ped_nom * (freq_margin / 50);
+    let margin_ped = (ped_freq / shaft_freq) * 100 - 100;
+    let margin_shaft = (p_shaft_max / shaft_freq) * 100 - 100;
+
+    document.getElementById('ped_shaft_freq').innerHTML = shaft_freq.toFixed(2) + " кВт";
+    document.getElementById('ped_ped_freq').innerHTML = ped_freq.toFixed(2) + " кВт";
+    document.getElementById('ped_margin_ped').innerHTML = margin_ped.toFixed(1) + " %";
+    document.getElementById('ped_margin_shaft').innerHTML = margin_shaft.toFixed(1) + " %";
+
+    let pedEl = document.getElementById('ped_margin_ped');
+    let shaftEl = document.getElementById('ped_margin_shaft');
+    if (margin_ped < 15) { pedEl.style.color = '#ff3b30'; } else { pedEl.style.color = '#0071e3'; }
+    if (margin_shaft < 20) { shaftEl.style.color = '#ff3b30'; } else { shaftEl.style.color = '#0071e3'; }
+}
+
+// ---------- Напор ----------
+function toggleTMS() { let w=document.getElementById('head_tms').value==='work'; document.getElementById('head_ptms_group').style.display=w?'flex':'none'; document.getElementById('head_ndin_group').style.display=w?'none':'flex'; updateHead(); }
+function updateHead() {
+    let L=parseFloat(document.getElementById('head_l').value)||0, elong=parseFloat(document.getElementById('head_elong').value)||0, h50=parseFloat(document.getElementById('head_h50').value)||0, f=parseFloat(document.getElementById('head_f').value)||50, rbuf=parseFloat(document.getElementById('head_rbuf').value)||0, rzatr=parseFloat(document.getElementById('head_rzatr').value)||0, rho=parseFloat(document.getElementById('head_rho').value)||823, tms=document.getElementById('head_tms').value, ptms=parseFloat(document.getElementById('head_ptms').value)||0, ndin_man=parseFloat(document.getElementById('head_ndin_man').value)||0;
+    let lvert=L-elong;
+    let hcur=h50*Math.pow(f/50,2);
+    let ndin=0;
+    if(tms==='work') ndin=lvert-(ptms-rzatr)*10000/rho;
+    else ndin=ndin_man;
+    let margin = hcur - ndin - (rbuf - rzatr) * 10000 / rho;
+    document.getElementById('head_lvert').innerHTML=lvert.toFixed(1)+" м";
+    document.getElementById('head_hcur').innerHTML=hcur.toFixed(1)+" м";
+    document.getElementById('head_ndin').innerHTML=ndin.toFixed(1)+" м";
+    document.getElementById('head_margin').innerHTML=margin.toFixed(1)+" м";
+    let wd=document.getElementById('head_warning');
+    if(margin<0){ wd.innerHTML="🔴 Отрицательный запас! Насос НЕ додаёт."; wd.className="warning-note danger-note"; } else { wd.innerHTML="✅ Положительный запас. Установка работает с запасом."; wd.className="warning-note success-note"; }
+}
+
+// ---------- ЧРП ----------
+function updateChrp() {
+    let f1=parseFloat(document.getElementById('chrp_f1').value)||50, f2=parseFloat(document.getElementById('chrp_f2').value)||50, q1=parseFloat(document.getElementById('chrp_q1').value)||0, h1=parseFloat(document.getElementById('chrp_h1').value)||0, n1p=parseFloat(document.getElementById('chrp_n1_ped').value)||0, n1n=parseFloat(document.getElementById('chrp_n1_nas').value)||0, u1=parseFloat(document.getElementById('chrp_u1').value)||0;
+    let q2=q1*f2/f1, h2=h1*Math.pow(f2/f1,2), n2p=n1p*f2/f1, n2n=n1n*Math.pow(f2/f1,3), u2=u1*f2/f1, fmax=(n1p>0&&n1n>0)?f1*Math.sqrt(n1p/n1n):0;
+    document.getElementById('chrp_q2').innerHTML=q2.toFixed(2)+" м³/сут";
+    document.getElementById('chrp_h2').innerHTML=h2.toFixed(2)+" м";
+    document.getElementById('chrp_n2_ped').innerHTML=n2p.toFixed(2)+" кВт";
+    document.getElementById('chrp_n2_nas').innerHTML=n2n.toFixed(2)+" кВт";
+    document.getElementById('chrp_u2').innerHTML=u2.toFixed(2)+" В";
+    document.getElementById('chrp_fmax').innerHTML=fmax.toFixed(1)+" Гц";
+}
+
+// ---------- Газ ----------
+function updateGas() {
+    let gor=parseFloat(document.getElementById('gas_gor').value)||0, roil=parseFloat(document.getElementById('gas_roil').value)||0.857, psat=parseFloat(document.getElementById('gas_psat').value)||1, pzab=parseFloat(document.getElementById('gas_pzab').value)||1, ppr=parseFloat(document.getElementById('gas_ppr').value)||1, q=parseFloat(document.getElementById('gas_q').value)||0, wc=parseFloat(document.getElementById('gas_wc').value)||0;
+    let qoil=q*(100-wc)/100, alpha=(gor*roil)/(psat-1), freeZab=0, freePr=0;
+    if(pzab<psat) freeZab=(gor-alpha*pzab)*qoil/(pzab*roil);
+    if(ppr<psat) freePr=(gor-alpha*ppr)*qoil/(ppr*roil);
+    let beta=freePr/(freePr+q); if(isNaN(beta)) beta=0;
+    document.getElementById('gas_alpha').innerHTML=alpha.toFixed(4)+" м³/(м³·атм)";
+    document.getElementById('gas_free_zab').innerHTML=freeZab.toFixed(2)+" м³/сут";
+    document.getElementById('gas_free_pr').innerHTML=freePr.toFixed(2)+" м³/сут";
+    document.getElementById('gas_beta').innerHTML=(beta*100).toFixed(2)+" %";
+    let rec=document.getElementById('gas_recommend');
+    if(beta>0.25){ rec.innerHTML="🔴 КРИТИЧЕСКОЕ ГАЗОСОДЕРЖАНИЕ β = "+(beta*100).toFixed(2)+"%! Возможен срыв подачи. Требуется газосепаратор."; rec.className="warning-note danger-note"; }
+    else if(beta>0.15){ rec.innerHTML="🟠 Повышенное газосодержание β = "+(beta*100).toFixed(2)+"%. Рекомендуется газосепаратор."; rec.className="warning-note"; }
+    else if(beta>0.05){ rec.innerHTML="🟢 Допустимое газосодержание β = "+(beta*100).toFixed(2)+"%. Работа без газосепаратора возможна."; rec.className="warning-note success-note"; }
+    else { rec.innerHTML="✅ Низкое газосодержание β = "+(beta*100).toFixed(2)+"%. Газ не влияет на работу насоса."; rec.className="warning-note success-note"; }
+}
+
+// ---------- Объёмы ----------
+function updateFluids() {
+    let wc1 = parseFloat(document.getElementById('fl1_wc').value) || 0;
+    let q1 = parseFloat(document.getElementById('fl1_q').value) || 0;
+    let roil1 = parseFloat(document.getElementById('fl1_roil').value) || 0.862;
+    let qn1 = q1 * (1 - wc1/100) * roil1;
+    document.getElementById('fl1_result').innerHTML = qn1.toFixed(3) + " т/сут";
+
+    let q2 = parseFloat(document.getElementById('fl2_q').value) || 0;
+    let qn2 = parseFloat(document.getElementById('fl2_qn').value) || 0;
+    let roil2 = parseFloat(document.getElementById('fl2_roil').value) || 0.835;
+    let wc2 = (q2 * roil2 - qn2) / (q2 * roil2) * 100;
+    if (q2 === 0 || isNaN(wc2)) wc2 = 0;
+    document.getElementById('fl2_result').innerHTML = wc2.toFixed(2) + " %";
+
+    let wc3 = parseFloat(document.getElementById('fl3_wc').value) || 0;
+    let qn3 = parseFloat(document.getElementById('fl3_qn').value) || 0;
+    let roil3 = parseFloat(document.getElementById('fl3_roil').value) || 0.835;
+    let denom = (1 - wc3/100) * roil3;
+    let q3 = (denom !== 0) ? qn3 / denom : 0;
+    document.getElementById('fl3_result').innerHTML = q3.toFixed(2) + " м³/сут";
+}
+
+function updateCollector() {
+    let d = parseFloat(document.getElementById('coll_d').value) || 0;
+    let h = parseFloat(document.getElementById('coll_h').value) || 0;
+    let L = parseFloat(document.getElementById('coll_l').value) || 0;
+    let d_inner = d - 2*h;
+    let V = (d_inner > 0 && L > 0) ? Math.PI * Math.pow(d_inner/1000, 2) / 4 * L : 0;
+    document.getElementById('coll_d_inner').innerHTML = d_inner.toFixed(1) + " мм";
+    document.getElementById('coll_result').innerHTML = V.toFixed(3) + " м³";
+}
+
+// Vзатр
+let sections = [];
+function calcSectionVolume(casingOD, casingWall, tubingOD, length) {
+    let casingID = casingOD - 2*casingWall;
+    let areaCasing = Math.PI * Math.pow(casingID,2)/4;
+    let areaTubing = Math.PI * Math.pow(tubingOD,2)/4;
+    let areaAnnulus = (areaCasing - areaTubing) / 1e6;
+    return areaAnnulus * length;
+}
+function saveSections() { localStorage.setItem('annulus_sections', JSON.stringify(sections)); }
+function loadSections() {
+    const saved = localStorage.getItem('annulus_sections');
+    if (saved && JSON.parse(saved).length>0) sections = JSON.parse(saved);
+    else sections = [{casingOD:168,casingWall:8.9,tubingOD:73,length:1270},{casingOD:168,casingWall:8.9,tubingOD:60,length:1550},{casingOD:146,casingWall:7,tubingOD:73,length:0},{casingOD:146,casingWall:8,tubingOD:60,length:0},{casingOD:146,casingWall:8.5,tubingOD:60,length:0},{casingOD:146,casingWall:7,tubingOD:60,length:0}];
+    renderAnnulusTable();
+}
+function renderAnnulusTable() {
+    let tbody = document.getElementById('annulusTbody'); if(!tbody) return; tbody.innerHTML=''; let totalLength=0, totalVolume=0;
+    sections.forEach((section,idx) => {
+        let volume = calcSectionVolume(section.casingOD, section.casingWall, section.tubingOD, section.length);
+        totalLength += section.length; totalVolume += volume;
+        let row = tbody.insertRow();
+        row.insertCell(0).innerHTML = `<input type="number" class="sec-casing-od" value="${section.casingOD}" step="1" style="width:70px">`;
+        row.insertCell(1).innerHTML = `<input type="number" class="sec-casing-wall" value="${section.casingWall}" step="0.1" style="width:70px">`;
+        row.insertCell(2).innerHTML = `<input type="number" class="sec-tubing-od" value="${section.tubingOD}" step="1" style="width:70px">`;
+        row.insertCell(3).innerHTML = `<input type="number" class="sec-length" value="${section.length}" step="10" style="width:80px">`;
+        row.insertCell(4).innerHTML = volume.toFixed(2);
+        row.insertCell(5).innerHTML = `<button class="delete-row-btn" data-idx="${idx}">✖</button>`;
+    });
+    document.getElementById('totalLength').innerHTML = `<strong>${totalLength.toFixed(0)} м</strong>`;
+    document.getElementById('totalVolume').innerHTML = `<strong>${totalVolume.toFixed(2)} м³</strong>`;
+    document.getElementById('vkp_total_display').innerHTML = totalVolume.toFixed(2)+" м³";
+    document.getElementById('total_length_display').innerHTML = totalLength.toFixed(0)+" м";
+    document.getElementById('qin_v').value = totalVolume.toFixed(3);
+    updateQin();
+
+    document.querySelectorAll('#annulusTbody .sec-casing-od').forEach((inp,i)=>inp.addEventListener('change',()=>{ sections[i].casingOD=parseFloat(inp.value)||0; renderAnnulusTable(); saveSections(); }));
+    document.querySelectorAll('#annulusTbody .sec-casing-wall').forEach((inp,i)=>inp.addEventListener('change',()=>{ sections[i].casingWall=parseFloat(inp.value)||0; renderAnnulusTable(); saveSections(); }));
+    document.querySelectorAll('#annulusTbody .sec-tubing-od').forEach((inp,i)=>inp.addEventListener('change',()=>{ sections[i].tubingOD=parseFloat(inp.value)||0; renderAnnulusTable(); saveSections(); }));
+    document.querySelectorAll('#annulusTbody .sec-length').forEach((inp,i)=>inp.addEventListener('change',()=>{ sections[i].length=parseFloat(inp.value)||0; renderAnnulusTable(); saveSections(); }));
+    document.querySelectorAll('.delete-row-btn').forEach(btn=>btn.addEventListener('click',()=>{ let idx=parseInt(btn.dataset.idx); sections.splice(idx,1); renderAnnulusTable(); saveSections(); }));
+}
+function addSection() { sections.push({casingOD:168,casingWall:8,tubingOD:73,length:0}); renderAnnulusTable(); saveSections(); }
+function removeLastSection() { if(sections.length>1) sections.pop(); else if(sections.length===1) sections[0]={casingOD:168,casingWall:8,tubingOD:73,length:0}; renderAnnulusTable(); saveSections(); }
+
+// Vнкт
+let nktSections = [];
+function saveNkt() { localStorage.setItem('nkt_sections', JSON.stringify(nktSections)); }
+function loadNkt() {
+    const saved = localStorage.getItem('nkt_sections');
+    if (saved && JSON.parse(saved).length>0) nktSections = JSON.parse(saved);
+    else nktSections = [{diameter:73, wall:5.5, length:1000}];
+    renderNktTable();
+}
+function calcNktVolume(diameter, wall, length) {
+    let dInner = diameter - 2*wall;
+    let area = Math.PI * Math.pow(dInner/1000,2) / 4;
+    return area * length;
+}
+function renderNktTable() {
+    let tbody = document.getElementById('nktTbody'); if(!tbody) return; tbody.innerHTML=''; let totalLength=0, totalVolume=0;
+    nktSections.forEach((section,idx) => {
+        let dInner = section.diameter - 2*section.wall;
+        let volume = calcNktVolume(section.diameter, section.wall, section.length);
+        totalLength += section.length; totalVolume += volume;
+        let row = tbody.insertRow();
+        let selD = document.createElement('select'); [60,73,89].forEach(v=>{ let o=document.createElement('option'); o.value=v; o.textContent=v; if(v===section.diameter) o.selected=true; selD.appendChild(o); }); selD.className='nkt-diam'; selD.dataset.idx=idx;
+        let selW = document.createElement('select'); [5,5.5,6,6.5,7,8].forEach(v=>{ let o=document.createElement('option'); o.value=v; o.textContent=v; if(v===section.wall) o.selected=true; selW.appendChild(o); }); selW.className='nkt-wall'; selW.dataset.idx=idx;
+        let dSpan = document.createElement('span'); dSpan.textContent = dInner.toFixed(1); dSpan.className='nkt-dinner';
+        let inpL = document.createElement('input'); inpL.type='number'; inpL.value=section.length; inpL.className='nkt-length'; inpL.dataset.idx=idx; inpL.style.width='80px';
+        let vSpan = document.createElement('span'); vSpan.textContent=volume.toFixed(2); vSpan.className='nkt-volume';
+        let delBtn = document.createElement('button'); delBtn.textContent='✖'; delBtn.className='delete-row-btn'; delBtn.dataset.idx=idx;
+        row.insertCell(0).appendChild(selD);
+        row.insertCell(1).appendChild(selW);
+        row.insertCell(2).appendChild(dSpan);
+        row.insertCell(3).appendChild(inpL);
+        row.insertCell(4).appendChild(vSpan);
+        row.insertCell(5).appendChild(delBtn);
+    });
+    document.getElementById('nktTotalLength').innerHTML = `<strong>${totalLength.toFixed(0)} м</strong>`;
+    document.getElementById('nktTotalVolume').innerHTML = `<strong>${totalVolume.toFixed(2)} м³</strong>`;
+    document.getElementById('nkt_total_display').innerHTML = totalVolume.toFixed(2)+" м³";
+    document.getElementById('nkt_length_display').innerHTML = totalLength.toFixed(0)+" м";
+    document.querySelectorAll('#nktTbody .nkt-diam').forEach(sel=>sel.addEventListener('change',function(){ let idx=parseInt(this.dataset.idx); nktSections[idx].diameter=parseFloat(this.value); renderNktTable(); saveNkt(); }));
+    document.querySelectorAll('#nktTbody .nkt-wall').forEach(sel=>sel.addEventListener('change',function(){ let idx=parseInt(this.dataset.idx); nktSections[idx].wall=parseFloat(this.value); renderNktTable(); saveNkt(); }));
+    document.querySelectorAll('#nktTbody .nkt-length').forEach(inp=>inp.addEventListener('input',function(){ let idx=parseInt(this.dataset.idx); nktSections[idx].length=parseFloat(this.value)||0; renderNktTable(); saveNkt(); }));
+    document.querySelectorAll('#nktTbody .delete-row-btn').forEach(btn=>btn.addEventListener('click',function(){ let idx=parseInt(this.dataset.idx); nktSections.splice(idx,1); renderNktTable(); saveNkt(); }));
+}
+function addNktSection() { nktSections.push({diameter:73, wall:5.5, length:0}); renderNktTable(); saveNkt(); }
+function removeLastNktSection() { if(nktSections.length>1) nktSections.pop(); else if(nktSections.length===1) nktSections[0]={diameter:73, wall:5.5, length:0}; renderNktTable(); saveNkt(); }
+
+// ===== МОДУЛЬ: ОХЛАЖДЕНИЕ =====
+function updateCooling() {
+    let power = parseFloat(document.getElementById('cool_ped_power').value) || 0;
+    let eff = parseFloat(document.getElementById('cool_ped_efficiency').value) || 85;
+    let cp = parseFloat(document.getElementById('cool_cp').value) || 2200;
+    let rho = parseFloat(document.getElementById('cool_rho').value) || 850;
+    let dt = parseFloat(document.getElementById('cool_dt').value) || 10;
+    let safety = parseFloat(document.getElementById('cool_safety').value) || 1.2;
+    let currentQ = parseFloat(document.getElementById('cool_current_q_input').value) || 0;
+
+    let heat = power * (1 - eff / 100);
+    let qmin = (heat * 1000) / (rho * cp * dt) * 86400 / 1000;
+    if (qmin < 0) qmin = 0;
+    let qminSafe = qmin * safety;
+
+    document.getElementById('cool_heat').innerHTML = heat.toFixed(2) + " кВт";
+    document.getElementById('cool_qmin').innerHTML = qmin.toFixed(1) + " м³/сут";
+    document.getElementById('cool_qmin_safe').innerHTML = qminSafe.toFixed(1) + " м³/сут";
+    document.getElementById('cool_current_q').innerHTML = currentQ > 0 ? currentQ.toFixed(1) + " м³/сут" : "—";
+
+    let statusEl = document.getElementById('cool_status');
+    let warnEl = document.getElementById('cool_warning');
+    if (currentQ > 0) {
+        if (currentQ >= qminSafe) {
+            statusEl.innerHTML = "✅ Охлаждение достаточное";
+            statusEl.style.color = '#34c759';
+            warnEl.innerHTML = "✅ Приток превышает минимальный с запасом. Охлаждение ПЭД обеспечено.";
+            warnEl.className = "warning-note success-note";
+        } else if (currentQ >= qmin) {
+            statusEl.innerHTML = "⚠️ Охлаждение на грани (без запаса)";
+            statusEl.style.color = '#ff9f0a';
+            warnEl.innerHTML = "⚠️ Приток близок к минимальному. Рекомендуется увеличить дебит или снизить нагрузку.";
+            warnEl.className = "warning-note";
+        } else {
+            statusEl.innerHTML = "🔴 Охлаждение НЕДОСТАТОЧНО!";
+            statusEl.style.color = '#ff3b30';
+            warnEl.innerHTML = "🔴 КРИТИЧЕСКИЙ НЕДОСТАТОК ПРИТОКА! Возможен перегрев ПЭД. Требуется увеличить дебит до " + qminSafe.toFixed(1) + " м³/сут.";
+            warnEl.className = "warning-note danger-note";
+        }
+    } else {
+        statusEl.innerHTML = "—";
+        statusEl.style.color = '#0071e3';
+        warnEl.innerHTML = "💡 Введите текущий приток для проверки охлаждения. Расчёт показывает минимальный необходимый дебит.";
+        warnEl.className = "warning-note info-note";
+    }
+}
+
+// ===== МОДУЛЬ: ШТУЦЕР (ОБНОВЛЁННЫЙ) =====
+function updateChoke() {
+    let q = parseFloat(document.getElementById('choke_q').value) || 0;
+    let dp = parseFloat(document.getElementById('choke_dp').value) || 1;
+    let rho = parseFloat(document.getElementById('choke_rho').value) || 850;
+    
+    // Берём C из выпадающего списка
+    let cType = document.getElementById('choke_c_type');
+    let c = parseFloat(cType.value) || 0.62;
+    document.getElementById('choke_c').value = c;
+    
+    // Показываем выбранный C
+    document.getElementById('choke_c_display').innerHTML = c.toFixed(2);
+
+    // Перевод расхода в м³/с
+    let qMs = q / 86400;
+    
+    // Перевод давления в Па
+    let dpPa = dp * 101325;
+    
+    // Расчёт площади
+    let sqrtTerm = Math.sqrt(2 * dpPa / rho);
+    let area = (c > 0 && sqrtTerm > 0) ? qMs / (c * sqrtTerm) : 0;
+    
+    // Расчёт диаметра в мм
+    let d = area > 0 ? Math.sqrt(4 * area / Math.PI) * 1000 : 0;
+
+    // Стандартные диаметры штуцеров
+    const stdSizes = [2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 35, 38, 40, 45, 50];
+    let std = d;
+    for (let s of stdSizes) {
+        if (s >= d) { std = s; break; }
+    }
+    if (d > 50) std = Math.round(d);
+    if (d < 2) std = 2;
+
+    document.getElementById('choke_result').innerHTML = d.toFixed(2) + " мм";
+    document.getElementById('choke_area').innerHTML = (area * 1e6).toFixed(2) + " мм²";
+    document.getElementById('choke_std').innerHTML = std + " мм";
+}
+
+// ===== МОДУЛЬ: ГЛУШЕНИЕ =====
+function updateKill() {
+    let h = parseFloat(document.getElementById('kill_h').value) || 0;
+    let dNkt = parseFloat(document.getElementById('kill_d_nkt').value) || 62;
+    let dOk = parseFloat(document.getElementById('kill_d_ok').value) || 146;
+    let rhoWell = parseFloat(document.getElementById('kill_rho_well').value) || 850;
+    let rhoKill = parseFloat(document.getElementById('kill_rho_kill').value) || 1100;
+    let ppl = parseFloat(document.getElementById('kill_ppl').value) || 240;
+    let safety = parseFloat(document.getElementById('kill_safety').value) || 1.15;
+
+    // Объём НКТ
+    let areaNkt = Math.PI * Math.pow(dNkt / 1000, 2) / 4;
+    let vNkt = areaNkt * h;
+
+    // Объём затрубья (кольцевое пространство)
+    let areaOk = Math.PI * Math.pow(dOk / 1000, 2) / 4;
+    let vAnnulus = (areaOk - areaNkt) * h;
+    if (vAnnulus < 0) vAnnulus = 0;
+
+    let vTotal = vNkt + vAnnulus;
+
+    // Давление на забое при глушении
+    let pBottom = ppl * safety;
+    // Давление на устье
+    let pWellhead = pBottom - rhoKill * 9.81 * h / 10000;
+    if (pWellhead < 0) pWellhead = 0;
+
+    let pMargin = pBottom - ppl;
+
+    document.getElementById('kill_v_nkt').innerHTML = vNkt.toFixed(2) + " м³";
+    document.getElementById('kill_v_annulus').innerHTML = vAnnulus.toFixed(2) + " м³";
+    document.getElementById('kill_v_total').innerHTML = vTotal.toFixed(2) + " м³";
+    document.getElementById('kill_p_wellhead').innerHTML = pWellhead.toFixed(2) + " атм";
+    document.getElementById('kill_p_bottom').innerHTML = pBottom.toFixed(2) + " атм";
+    document.getElementById('kill_p_margin').innerHTML = pMargin.toFixed(2) + " атм";
+
+    let warn = document.getElementById('kill_warning');
+    if (pWellhead < 0) {
+        warn.innerHTML = "⚠️ Давление на устье отрицательное! Плотность жидкости глушения слишком высокая. Уменьшите плотность раствора.";
+        warn.className = "warning-note danger-note";
+    } else if (pWellhead > 50) {
+        warn.innerHTML = "🔴 Высокое давление на устье (" + pWellhead.toFixed(1) + " атм). Проверьте оборудование на герметичность.";
+        warn.className = "warning-note danger-note";
+    } else if (pMargin < 10) {
+        warn.innerHTML = "⚠️ Запас давления менее 10 атм. Рекомендуется увеличить плотность раствора или коэффициент запаса.";
+        warn.className = "warning-note";
+    } else {
+        warn.innerHTML = "✅ Расчёт выполнен. Давление на устье " + pWellhead.toFixed(1) + " атм, запас " + pMargin.toFixed(1) + " атм. Объём раствора: " + vTotal.toFixed(2) + " м³.";
+        warn.className = "warning-note success-note";
+    }
+}
+
+// ===== ЭКСПОРТ ВСЕХ МОДУЛЕЙ =====
+function exportAllToPDF() {
+    const allCards = document.querySelectorAll('.card');
+    const container = document.createElement('div');
+    container.style.cssText = 'padding:20px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'text-align:center; padding:20px 0; border-bottom:2px solid #0071e3; margin-bottom:24px;';
+    header.innerHTML = `<h1 style="font-size:28px; font-weight:700; margin:0;">Инженерный калькулятор УЭЦН</h1>
+                        <p style="color:#6e6e73; margin:4px 0 0 0;">Дата: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}</p>`;
+    container.appendChild(header);
+
+    allCards.forEach(card => {
+        const clone = card.cloneNode(true);
+        clone.querySelectorAll('.button-bar, .export-pdf, .export-excel, .delete-row-btn, #addSectionBtn, #removeLastSectionBtn, #addNktSectionBtn, #removeLastNktSectionBtn, .small-btn').forEach(el => el.remove());
+        clone.querySelectorAll('input, select').forEach(el => {
+            const span = document.createElement('span');
+            span.textContent = el.value;
+            span.style.cssText = 'font-weight:500;';
+            el.parentNode.replaceChild(span, el);
+        });
+        container.appendChild(clone);
+        const hr = document.createElement('hr');
+        hr.style.cssText = 'margin:24px 0; border:1px solid #e5e5ea;';
+        container.appendChild(hr);
+    });
+
+    const footer = document.createElement('div');
+    footer.style.cssText = 'text-align:center; padding:16px 0; font-size:12px; color:#8e8e93; border-top:1px solid #d2d2d7; margin-top:20px;';
+    footer.textContent = 'Инженерный калькулятор · Расчёт параметров УЭЦН · Версия 2.0 · Автор: Носар А.И.';
+    container.appendChild(footer);
+
+    const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `Инженерный_калькулятор_УЭЦН_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(container).save();
+}
+
+function exportAllToExcel() {
+    const allCards = document.querySelectorAll('.card');
+    const container = document.createElement('div');
+    container.style.cssText = 'padding:20px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#fff;';
+    
+    const header = document.createElement('div');
+    header.style.cssText = 'text-align:center; padding:20px 0; border-bottom:2px solid #0071e3; margin-bottom:24px;';
+    header.innerHTML = `<h1 style="font-size:28px; font-weight:700; margin:0;">Инженерный калькулятор УЭЦН</h1>
+                        <p style="color:#6e6e73; margin:4px 0 0 0;">Дата: ${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}</p>`;
+    container.appendChild(header);
+
+    allCards.forEach((card, idx) => {
+        const clone = card.cloneNode(true);
+        clone.querySelectorAll('.button-bar, .export-pdf, .export-excel, .delete-row-btn, #addSectionBtn, #removeLastSectionBtn, #addNktSectionBtn, #removeLastNktSectionBtn, .small-btn').forEach(el => el.remove());
+        clone.querySelectorAll('input, select').forEach(el => {
+            const span = document.createElement('span');
+            span.textContent = el.value;
+            span.style.cssText = 'font-weight:500;';
+            el.parentNode.replaceChild(span, el);
+        });
+        container.appendChild(clone);
+        if (idx < allCards.length - 1) {
+            const hr = document.createElement('hr');
+            hr.style.cssText = 'margin:24px 0; border:1px solid #e5e5ea;';
+            container.appendChild(hr);
+        }
+    });
+
+    const footer = document.createElement('div');
+    footer.style.cssText = 'text-align:center; padding:16px 0; font-size:12px; color:#8e8e93; border-top:1px solid #d2d2d7; margin-top:20px;';
+    footer.textContent = 'Инженерный калькулятор · Расчёт параметров УЭЦН · Версия 2.0 · Автор: Носар А.И.';
+    container.appendChild(footer);
+
+    const style = document.createElement('style');
+    style.textContent = `
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #fff; }
+        .card { border: 1px solid #d2d2d7; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+        .card-header { border-bottom: 1px solid #d2d2d7; padding-bottom: 10px; margin-bottom: 16px; }
+        .card-header h2 { font-size: 1.4rem; font-weight: 600; }
+        .badge { background: #f5f5f7; border-radius: 40px; padding: 4px 12px; font-size: 0.7rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label { font-weight: 600; font-size: 0.7rem; text-transform: uppercase; color: #6e6e73; }
+        .input-group span { font-size: 0.95rem; }
+        .result-area { background: #f5f5f7; border-radius: 16px; padding: 16px; border-left: 4px solid #0071e3; margin-top: 16px; }
+        .result-row { display: flex; justify-content: space-between; padding: 4px 0; }
+        .result-label { font-weight: 500; }
+        .result-value { font-weight: 600; color: #0071e3; }
+        .warning-note { background: #f5f5f7; border-radius: 14px; padding: 12px; border-left: 4px solid #ff9f0a; margin-top: 16px; font-size: 0.75rem; }
+        .sections-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .sections-table th { background: #f5f5f7; font-weight: 600; text-align: center; padding: 8px; border-bottom: 1px solid #d2d2d7; }
+        .sections-table td { padding: 6px; text-align: center; border-bottom: 1px solid #e5e5ea; }
+        .section-total { background: #f5f5f7; font-weight: 600; }
+        .fluid-grid, .kpr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .fluid-item, .kpr-item { background: #f9f9fb; border-radius: 14px; padding: 14px 16px; border: 1px solid #e5e5ea; }
+        .section-divider { margin: 18px 0 12px 0; font-weight: 600; color: #6e6e73; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #d2d2d7; padding-bottom: 4px; }
+        @media(max-width:700px) { .form-grid { grid-template-columns: 1fr; } .fluid-grid, .kpr-grid { grid-template-columns: 1fr; } }
+    `;
+    container.prepend(style);
+
+    const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Инженерный калькулятор УЭЦН - все модули</title>
+</head>
+<body>
+    ${container.innerHTML}
+</body>
+</html>`;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Инженерный_калькулятор_УЭЦН_${new Date().toISOString().slice(0,10)}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
+// ===== ЭКСПОРТ ОДНОГО МОДУЛЯ =====
+function exportModuleAsPDF(moduleId) {
+    let targetCard = document.querySelector(`#${moduleId} .card:first-of-type`);
+    if (!targetCard) return;
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'padding:20px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;';
+    const header = document.createElement('div');
+    header.style.cssText = 'text-align:center; padding:12px 0; border-bottom:2px solid #0071e3; margin-bottom:16px;';
+    header.innerHTML = `<h2 style="font-size:22px; font-weight:700; margin:0;">Инженерный калькулятор УЭЦН</h2>
+                        <p style="color:#6e6e73; margin:2px 0 0 0;">${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}</p>`;
+    wrapper.appendChild(header);
+    const clone = targetCard.cloneNode(true);
+    clone.querySelectorAll('.button-bar, .export-pdf, .export-excel, .small-btn').forEach(el => el.remove());
+    clone.querySelectorAll('input, select').forEach(el => {
+        const span = document.createElement('span');
+        span.textContent = el.value;
+        span.style.cssText = 'font-weight:500;';
+        el.parentNode.replaceChild(span, el);
+    });
+    wrapper.appendChild(clone);
+
+    const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `Инженерный_калькулятор_${moduleId}_${new Date().toISOString().slice(0,10)}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(wrapper).save();
+}
+
+function exportModuleToExcel(moduleId) {
+    let container = document.getElementById(moduleId);
+    if (!container) return;
+    const cloneContainer = container.cloneNode(true);
+    const btns = cloneContainer.querySelectorAll('.button-bar, .small-btn, .export-pdf, .export-excel, .delete-row-btn, #addSectionBtn, #removeLastSectionBtn, #addNktSectionBtn, #removeLastNktSectionBtn');
+    btns.forEach(btn=>btn.remove());
+    cloneContainer.querySelectorAll('input, select').forEach(el=>{ let span=document.createElement('span'); span.textContent=el.value; span.style.fontWeight='500'; el.parentNode.replaceChild(span,el); });
+    
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'padding:20px; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:#fff;';
+    const header = document.createElement('div');
+    header.style.cssText = 'text-align:center; padding:12px 0; border-bottom:2px solid #0071e3; margin-bottom:16px;';
+    header.innerHTML = `<h2 style="font-size:22px; font-weight:700; margin:0;">Инженерный калькулятор УЭЦН</h2>
+                        <p style="color:#6e6e73; margin:2px 0 0 0;">${new Date().toLocaleDateString('ru-RU')} ${new Date().toLocaleTimeString('ru-RU')}</p>`;
+    wrapper.appendChild(header);
+    wrapper.appendChild(cloneContainer);
+
+    const style = document.createElement('style');
+    style.textContent = `
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 20px; background: #fff; }
+        .card { border: 1px solid #d2d2d7; border-radius: 20px; padding: 20px; margin-bottom: 20px; }
+        .card-header { border-bottom: 1px solid #d2d2d7; padding-bottom: 10px; margin-bottom: 16px; }
+        .card-header h2 { font-size: 1.4rem; font-weight: 600; }
+        .badge { background: #f5f5f7; border-radius: 40px; padding: 4px 12px; font-size: 0.7rem; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .input-group { display: flex; flex-direction: column; gap: 4px; }
+        .input-group label { font-weight: 600; font-size: 0.7rem; text-transform: uppercase; color: #6e6e73; }
+        .input-group span { font-size: 0.95rem; }
+        .result-area { background: #f5f5f7; border-radius: 16px; padding: 16px; border-left: 4px solid #0071e3; margin-top: 16px; }
+        .result-row { display: flex; justify-content: space-between; padding: 4px 0; }
+        .result-label { font-weight: 500; }
+        .result-value { font-weight: 600; color: #0071e3; }
+        .warning-note { background: #f5f5f7; border-radius: 14px; padding: 12px; border-left: 4px solid #ff9f0a; margin-top: 16px; font-size: 0.75rem; }
+        .sections-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        .sections-table th { background: #f5f5f7; font-weight: 600; text-align: center; padding: 8px; border-bottom: 1px solid #d2d2d7; }
+        .sections-table td { padding: 6px; text-align: center; border-bottom: 1px solid #e5e5ea; }
+        .section-total { background: #f5f5f7; font-weight: 600; }
+        .fluid-grid, .kpr-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .fluid-item, .kpr-item { background: #f9f9fb; border-radius: 14px; padding: 14px 16px; border: 1px solid #e5e5ea; }
+        .section-divider { margin: 18px 0 12px 0; font-weight: 600; color: #6e6e73; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #d2d2d7; padding-bottom: 4px; }
+        @media(max-width:700px) { .form-grid { grid-template-columns: 1fr; } .fluid-grid, .kpr-grid { grid-template-columns: 1fr; } }
+    `;
+    wrapper.prepend(style);
+
+    const htmlContent = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Инженерный калькулятор ${moduleId}</title></head><body>${wrapper.innerHTML}</body></html>`;
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Инженерный_калькулятор_${moduleId}_${new Date().toISOString().slice(0,10)}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+}
+
+// ===== ИНИЦИАЛИЗАЦИЯ =====
+document.querySelectorAll('.export-pdf').forEach(btn=>btn.addEventListener('click',()=>exportModuleAsPDF(btn.dataset.module)));
+document.querySelectorAll('.export-excel').forEach(btn=>btn.addEventListener('click',()=>exportModuleToExcel(btn.dataset.module)));
+
+document.getElementById('exportAllPdf').addEventListener('click', exportAllToPDF);
+document.getElementById('exportAllExcel').addEventListener('click', exportAllToExcel);
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+});
+
+document.getElementById('head_tms')?.addEventListener('change', toggleTMS);
+document.getElementById('addSectionBtn')?.addEventListener('click', addSection);
+document.getElementById('removeLastSectionBtn')?.addEventListener('click', removeLastSection);
+document.getElementById('addNktSectionBtn')?.addEventListener('click', addNktSection);
+document.getElementById('removeLastNktSectionBtn')?.addEventListener('click', removeLastNktSection);
+
+// Подписки на все поля
+const allInputs = document.querySelectorAll('input, select');
+const allIds = Array.from(allInputs).map(el => el.id).filter(id => id);
+allIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+        if (id === 'p_simple_rho') {
+            el.addEventListener('change', updateAll);
+        } else {
+            el.addEventListener('input', updateAll);
+        }
+    }
+});
+
+// Загрузка
+loadSections();
+loadNkt();
+loadFromLocalStorage();
+toggleTMS();
+
+console.log("Инженерный калькулятор УЭЦН v2.0 загружен. Все 11 модулей работают.");
+console.log("Модуль 'Штуцер' обновлён — выбор типа штуцера из списка.");
+</script>
+</body>
+</html>

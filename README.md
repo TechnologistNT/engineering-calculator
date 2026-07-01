@@ -1,4 +1,3 @@
-[engineering-calculator.md](https://github.com/user-attachments/files/29534919/engineering-calculator.md)
 # Инженерный калькулятор УЭЦН
 
 **12 расчётных модулей для технолога нефтедобычи.**  

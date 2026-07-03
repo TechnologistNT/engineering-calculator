@@ -560,18 +560,27 @@
             .hbrand {
                 flex: 1 1 auto;
                 min-width: 0;
+                gap: 6px;
+            }
+            .hlogo {
+                width: 24px;
+                height: 24px;
+            }
+            .hlogo svg {
+                width: 14px;
+                height: 14px;
             }
             .htitle {
-                font-size: 15px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                font-size: 14px;
+                white-space: normal;      /* главное исправление — перенос текста */
+                overflow: visible;
+                text-overflow: clip;
+                line-height: 1.2;
             }
             .hsub {
                 font-size: 10px;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
+                white-space: normal;
+                line-height: 1.2;
             }
             .hacts {
                 width: 100%;
